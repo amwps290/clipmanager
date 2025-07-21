@@ -19,9 +19,12 @@
 ### 3. 脚本工具
 - `scripts/build-release.sh` - 本地发布构建脚本
 - `scripts/test-ci.sh` - 本地 CI 测试脚本
+- `scripts/build-windows.sh` - Windows 专用构建脚本
+- `scripts/test-cross-compile.sh` - 交叉编译测试脚本
 
 ### 4. 文档
 - `docs/ci-cd-guide.md` - 详细的 CI/CD 使用指南
+- `docs/windows-usage-guide.md` - Windows 使用指南和故障排除
 - `CI_CD_SETUP_SUMMARY.md` - 本总结文档
 
 ## 🚀 功能特性
@@ -57,6 +60,7 @@
 - 构建类型选择 (Release/Debug)
 - 可选的测试执行
 - 可选的产物上传
+- Windows 控制台版本构建 (用于调试)
 
 ✅ **自动发布**：
 - 创建 GitHub Release
@@ -145,6 +149,25 @@ sudo apt-get install -y \
 ```bash
 sudo apt-get install -y gcc-mingw-w64-x86-64
 ```
+
+## 🪟 Windows 版本说明
+
+为了解决 Windows 上"没有界面也没有提示信息"的问题，现在提供两个版本：
+
+### 标准版本 (`clipmanager-windows.exe`)
+- **特点**: 无控制台窗口，提供最佳用户体验
+- **适用**: 普通用户日常使用
+- **注意**: 如果程序出错，用户可能看不到错误信息
+
+### 控制台调试版本 (`clipmanager-windows-console.exe`)
+- **特点**: 显示控制台窗口，可以看到程序输出和错误信息
+- **适用**: 遇到问题时的故障排除
+- **用途**: 诊断启动失败、运行错误等问题
+
+### 改进的错误处理
+- ✅ 在 Windows 上自动创建日志文件 (`%TEMP%\clipmanager\clipmanager.log`)
+- ✅ 程序崩溃时创建错误报告文件 (`%TEMP%\clipmanager_error.txt`)
+- ✅ 更好的错误信息显示机制
 
 ## ✅ 验证状态
 
