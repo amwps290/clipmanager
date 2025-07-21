@@ -9,6 +9,7 @@
 ### 1. GitHub Actions 工作流
 - `.github/workflows/ci.yml` - 持续集成工作流
 - `.github/workflows/release.yml` - 发布工作流
+- `.github/workflows/manual-build.yml` - 手动构建工作流
 
 ### 2. 配置文件
 - `.cargo/config.toml` - Cargo 交叉编译配置
@@ -29,7 +30,7 @@
 ✅ **触发条件**：
 - 推送到 `main` 分支
 - Pull Request 到 `main` 分支
-- 手动触发
+- 手动触发 (支持选择测试和构建选项)
 
 ✅ **质量检查**：
 - 代码格式检查 (`cargo fmt`)
@@ -48,7 +49,14 @@
 ### 发布工作流 (`.github/workflows/release.yml`)
 ✅ **触发条件**：
 - 推送版本标签 (`v*`)
-- 手动触发
+- 手动触发 (支持自定义标签、预发布、草稿选项)
+
+### 手动构建工作流 (`.github/workflows/manual-build.yml`)
+✅ **专用手动构建**：
+- 灵活的构建目标选择 (Linux/Windows/全部)
+- 构建类型选择 (Release/Debug)
+- 可选的测试执行
+- 可选的产物上传
 
 ✅ **自动发布**：
 - 创建 GitHub Release

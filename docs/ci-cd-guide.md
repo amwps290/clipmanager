@@ -89,17 +89,34 @@ gcc-mingw-w64-x86-64
 
 ## 手动触发构建
 
-### CI 工作流
+### 方法一：使用专用的手动构建工作流 (推荐)
+1. 访问 GitHub 仓库的 Actions 页面
+2. 选择 "Manual Build" 工作流
+3. 点击 "Run workflow" 按钮
+4. 配置构建选项：
+   - **Build target**: 选择构建目标 (all/linux/windows)
+   - **Build type**: 选择构建类型 (release/debug)
+   - **Run tests**: 是否运行测试
+   - **Upload artifacts**: 是否上传构建产物
+5. 点击 "Run workflow" 开始构建
+
+### 方法二：使用 CI 工作流
 1. 访问 GitHub Actions 页面
 2. 选择 "CI/CD Pipeline" 工作流
 3. 点击 "Run workflow"
-4. 选择分支并运行
+4. 配置选项：
+   - **Run tests**: 是否运行测试
+   - **Build artifacts**: 是否构建和上传产物
+5. 选择分支并运行
 
-### 发布工作流
+### 方法三：手动发布
 1. 访问 GitHub Actions 页面
 2. 选择 "Release" 工作流
 3. 点击 "Run workflow"
-4. 输入标签名称 (如 `v0.1.0`)
+4. 配置发布选项：
+   - **Tag**: 输入标签名称 (如 `v0.1.0`)
+   - **Pre-release**: 是否标记为预发布
+   - **Draft**: 是否创建草稿发布
 5. 运行工作流
 
 ## 构建产物

@@ -7,9 +7,20 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release'
+        description: 'Tag to release (e.g., v0.1.0)'
         required: true
         default: 'v0.1.0'
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -61,8 +72,8 @@ jobs:
             
             ### 变更日志
             请查看提交历史了解详细变更。
-          draft: false
-          prerelease: false
+          draft: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.draft == 'true' || false }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease == 'true' || false }}
 
   build-and-upload:
     name: Build and Upload ${{ matrix.target }}

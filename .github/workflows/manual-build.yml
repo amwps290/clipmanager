@@ -1,0 +1,210 @@
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Build target'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'linux'
+          - 'windows'
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - 'release'
+          - 'debug'
+      run_tests:
+        description: 'Run tests before building'
+        required: false
+        default: true
+        type: boolean
+      upload_artifacts:
+        description: 'Upload build artifacts'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_tests == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libxkbcommon-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libxcb1-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libglib2.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libasound2-dev
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        run: cargo test --verbose
+
+  build:
+    name: Build for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            binary_name: clipmanager
+            artifact_name: clipmanager-linux
+            platform: linux
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            binary_name: clipmanager.exe
+            artifact_name: clipmanager-windows.exe
+            platform: windows
+
+    steps:
+      - name: Check if should build
+        id: should_build
+        run: |
+          if [ "${{ github.event.inputs.build_target }}" = "all" ] || [ "${{ github.event.inputs.build_target }}" = "${{ matrix.platform }}" ]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+          else
+            echo "build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if not selected
+        if: steps.should_build.outputs.build == 'false'
+        run: echo "Skipping ${{ matrix.target }} build" && exit 0
+
+      - name: Checkout code
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        if: steps.should_build.outputs.build == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation dependencies (Linux)
+        if: steps.should_build.outputs.build == 'true' && matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libxkbcommon-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libxcb1-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libglib2.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libasound2-dev
+
+      - name: Install cross-compilation dependencies (Windows)
+        if: steps.should_build.outputs.build == 'true' && matrix.target == 'x86_64-pc-windows-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Cache cargo registry
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: manual-${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            manual-${{ runner.os }}-${{ matrix.target }}-cargo-
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Build binary
+        if: steps.should_build.outputs.build == 'true'
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+            cargo build --release --target ${{ matrix.target }}
+            BUILD_DIR="target/${{ matrix.target }}/release"
+          else
+            cargo build --target ${{ matrix.target }}
+            BUILD_DIR="target/${{ matrix.target }}/debug"
+          fi
+          
+          mkdir -p artifacts
+          cp "$BUILD_DIR/${{ matrix.binary_name }}" "artifacts/${{ matrix.artifact_name }}"
+
+      - name: Upload artifacts
+        if: steps.should_build.outputs.build == 'true' && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ github.event.inputs.build_type }}
+          path: artifacts/${{ matrix.artifact_name }}
+          retention-days: 7
+
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: always()
+    steps:
+      - name: Print summary
+        run: |
+          echo "## Manual Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Target: ${{ github.event.inputs.build_target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Type: ${{ github.event.inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ github.event.inputs.run_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Upload: ${{ github.event.inputs.upload_artifacts }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Results:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY

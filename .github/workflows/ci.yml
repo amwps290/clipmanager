@@ -8,6 +8,17 @@ on:
   release:
     types: [ published ]
   workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run tests'
+        required: false
+        default: true
+        type: boolean
+      build_artifacts:
+        description: 'Build and upload artifacts'
+        required: false
+        default: true
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,6 +28,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run_tests == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,6 +82,7 @@ jobs:
     name: Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     needs: test
+    if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_artifacts == 'true') && (success() || github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
