@@ -7,6 +7,14 @@ description = "A cross-platform clipboard manager built with Rust and egui"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/clipmanager/clipmanager"
 
+[lib]
+name = "clipmanager"
+path = "src/lib.rs"
+
+[[bin]]
+name = "clipmanager"
+path = "src/main.rs"
+
 [dependencies]
 # GUI 框架
 eframe = { version = "0.32.0" }

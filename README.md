@@ -124,6 +124,47 @@ cargo build --release
 # Executable located at target/release/clipmanager
 ```
 
+### Cross-Platform Builds
+
+Use the provided scripts for cross-platform builds:
+
+```bash
+# Build for all supported platforms
+./scripts/build-release.sh
+
+# Test CI pipeline locally
+./scripts/test-ci.sh
+
+# Test with cross-compilation
+./scripts/test-ci.sh --cross-compile
+```
+
+## CI/CD Pipeline
+
+This project includes comprehensive GitHub Actions workflows for continuous integration and deployment:
+
+### Automated Testing
+- **Code Quality**: Format checking with `rustfmt` and linting with `clippy`
+- **Test Suite**: Automated unit and integration tests
+- **Cross-Platform**: Builds and tests on Linux and Windows
+
+### Automated Releases
+- **Binary Builds**: Automatic compilation for Linux and Windows
+- **GitHub Releases**: Automatic release creation when tags are pushed
+- **Artifacts**: Pre-built binaries available for download
+
+### Supported Platforms
+- **Linux**: `x86_64-unknown-linux-gnu`
+- **Windows**: `x86_64-pc-windows-gnu` (cross-compiled)
+
+### Release Process
+1. Update version in `Cargo.toml`
+2. Commit and push changes
+3. Create and push a version tag: `git tag v0.1.0 && git push origin v0.1.0`
+4. GitHub Actions automatically builds and creates a release
+
+For detailed CI/CD documentation, see [docs/ci-cd-guide.md](docs/ci-cd-guide.md).
+
 ## 使用说明
 
 ### 基本操作

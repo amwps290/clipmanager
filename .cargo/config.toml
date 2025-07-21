@@ -1,0 +1,36 @@
+# Cargo configuration for cross-compilation
+
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-ar"
+
+[target.x86_64-unknown-linux-gnu]
+linker = "gcc"
+
+# Optimization settings for release builds
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# Build settings
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+# Network settings
+[net]
+retry = 2
+git-fetch-with-cli = true
+
+# Registry settings
+[registry]
+default = "crates-io"
+
+# Note: Source replacement is commented out as we don't use vendored sources
+# [source.crates-io]
+# replace-with = "vendored-sources"
+#
+# [source.vendored-sources]
+# directory = "vendor"
