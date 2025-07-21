@@ -203,14 +203,14 @@ fn show_error_message(message: &str) {
         eprintln!("错误: {}", message);
 
         // 尝试写入临时文件，用户可以查看
-        if let Ok(temp_dir) = std::env::temp_dir().join("clipmanager_error.txt").to_str() {
-            if let Ok(mut file) = std::fs::File::create(temp_dir) {
-                use std::io::Write;
-                let _ = writeln!(file, "ClipManager 错误报告");
-                let _ = writeln!(file, "时间: {}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
-                let _ = writeln!(file, "错误: {}", message);
-                let _ = writeln!(file, "\n请将此文件发送给开发者以获取帮助。");
-            }
+        let error_file_path = std::env::temp_dir().join("clipmanager_error.txt");
+        if let Ok(mut file) = std::fs::File::create(&error_file_path) {
+            use std::io::Write;
+            let _ = writeln!(file, "ClipManager 错误报告");
+            let _ = writeln!(file, "时间: {}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+            let _ = writeln!(file, "错误: {}", message);
+            let _ = writeln!(file, "\n请将此文件发送给开发者以获取帮助。");
+            let _ = writeln!(file, "文件位置: {}", error_file_path.display());
         }
     }
 
